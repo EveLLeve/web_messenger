@@ -1,6 +1,6 @@
 import os
 
-from flask_login import LoginManager, login_user, login_required, logout_user
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
 from flask_restful import Api
 
@@ -31,6 +31,7 @@ def add_user(db_sess, username, name, surname, email, password):
     user.surname = surname.data
     db_sess.add(user)
     db_sess.commit()
+    return user
 
 
 def add_message(db_sess, content, creator):
@@ -82,13 +83,31 @@ def login():
     return render_template('login.html', title='Авторизация', form=form)
 
 
+@app.route('/')
+def index():
+    chats = []
+    if current_user.is_authenticated:
+        id_user = current_user.id
+        db_sess = db_session.create_session()
+        chats = db_sess.query(Chats).filter(Chats.users.any(User.id == id_user)).all()
+    return render_template('index.html', title='', chats=chats)
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         if form.password.data == form.submit_password.data:
-            add_user(db_sess, form.username, form.name, form.surname, form.email, form.password)
+            img = 'static/img/users/default.png'
+            user = add_user(db_sess, form.username, form.name, form.surname, form.email, form.password)
+            photo = form.photo.data.read()
+            if photo:
+                img = f'static/img/users/user{user.id}.{form.photo.data.filename[form.photo.data.filename.rfind(".") + 1:]}'
+                with open(img, 'wb') as f:
+                    f.write(photo)
+            user.profile_picture = img
+            db_sess.commit()
             return redirect("/login")
         return render_template('register.html',
                                message="Пароли не совпадают",
@@ -99,23 +118,28 @@ def register():
 @app.route('/chat', methods=['GET', 'POST'])
 def add_a_chat():
     form = ChatForm()
+    db_sess = db_session.create_session()
+    if current_user.friends:
+        friends = current_user.friends.split(', ')
+        form.members.choices = friends
     if form.validate_on_submit():
-        db_sess = db_session.create_session()
-        img = 'static/img/default_group.avif'
-        chat = add_chat(db_sess, form.name.data, [form.members.data])
+        img = 'static/img/group/default_group.avif'
+        members = form.members.data
+        members.append(current_user.username)
+        chat = add_chat(db_sess, form.name.data, members)
         photo = form.photo.data.read()
         if photo:
-            img = f'static/img/chat{chat.id}.{form.photo.data.filename[form.photo.data.filename.rfind(".") + 1:]}'
+            img = f'static/img/group/chat{chat.id}.{form.photo.data.filename[form.photo.data.filename.rfind(".") + 1:]}'
             with open(img, 'wb') as f:
                 f.write(photo)
         chat.chat_image = img
         db_sess.commit()
         return redirect(f"/chat/{chat.id}")
-    return render_template('chat.html', title='klk', form=form)
+    return render_template('create_chat.html', title='klk', form=form)
 
 
 def main():
-    db_session.global_init("db/chat.db")
+    db_session.global_init("db/chat.sqlite")
 
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)

@@ -14,16 +14,21 @@
   {% extends "base.html" %}
 
   {% block content %}
-        <!-- Использовать при создании чатов
-    <label for="exampleDataList" class="form-label">Добавить друзей</label>
-    <input class="form-control" list="datalistOptions" id="exampleDataList" placeholder="Type to search...">
-    <datalist id="datalistOptions">
-      <option value="San Francisco">
-      <option value="New York">
-      <option value="Seattle">
-      <option value="Los Angeles">
-      <option value="Chicago">
-    </datalist> -->
+  {% if current_user.is_authenticated %}
+  <a href="/chat"><button class="create_chat">Создать чат</button></a>
+  {% for chat in chats %}
+  <a class="chat" href="/chat/{{ chat.id }}">
+    <p class="chat">
+      <label>&emsp;
+          <img class="avatar" src="{{ chat.chat_image }}">&emsp;
+          {{ chat.name }}
+      </label>
+    </p>
+  </a>
+  {% endfor %}
+  {% else %}
+  <p>login</p>
+  {% endif %}
   {% endblock %}
 </body>
 </html>

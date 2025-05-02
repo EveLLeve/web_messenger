@@ -1,7 +1,3 @@
-h4.mars {
-    color: gray;
-    margin-left: 20px;
-}
 h1.work {
     text-align: center;
 }
@@ -13,13 +9,46 @@ td.td1 {
     padding: 10px 50px;
 }
 
-img.avatar {
+.avatar {
     border-radius: 50%;
-    width: 50px;
-    height: 50px;
+    margin-top: auto;
+    margin-bottom: auto;
+    width: 75px;
+    height: 75px;
+}
+.avatar1 {
+    border-radius: 50%;
+    width: 75px;
+    height: 75px;
+    position: absolute;
 }
 
 ul.ds {
     min-width: 0;
     overflow-wrap: break-word;
+}
+
+div.container {
+    border: 2px solid #acc;
+    max-height: 30em;
+    background-color: #acc;
+    overflow-y: scroll;
+}
+
+label.images {
+    position: relative;
+}
+
+p.chat {
+    background-color: #acc;
+    align-items: center;
+    color: black;
+}
+.inp {
+    width: 85%
+}
+
+button.create_chat {
+    background-color: #000;
+    color: white;
 }

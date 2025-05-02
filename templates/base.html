@@ -17,13 +17,13 @@
         {% if current_user.is_authenticated %}
                 <div class="dropdown">
                   <a class="navbar-brand" data-bs-toggle="dropdown" aria-expanded="false" >{{ current_user.username }}</a>
-                  <img class="avatar" data-bs-toggle="dropdown" aria-expanded="false" src="/static/img/default.png">
+                  <img class="avatar" data-bs-toggle="dropdown" aria-expanded="false" src="{{ current_user.profile_picture}}">
                   <a>&emsp;&emsp;&emsp;&emsp;</a>
 
                   <ul class="ds dropdown-menu">
                     <li class="ds"><a class="dropdown-item" href="#">Action</a></li>
                     <li class="ds"><a class="dropdown-item" href="#">Another action</a></li>
-                    <li class="ds"><a class="dropdown-item" href="#">Something else here</a></li>
+                    <li class="ds"><a class="dropdown-item" href="/logout">Выйти</a></li>
                   </ul>
                 </div>
         {% else %}
@@ -35,7 +35,6 @@
     </nav>
 </header>
 <!-- Begin page content -->
-<h4 class="mars">И на Марсе будут яблони цвести!</h4>
 <main role="main" class="container">
     {% block content %}{% endblock %}
 </main>
