@@ -1,14 +1,3 @@
-h1.work {
-    text-align: center;
-}
-td.td {
-    text-align: center;
-    padding: 10px 50px;
-}
-td.td1 {
-    padding: 10px 50px;
-}
-
 .avatar {
     border-radius: 50%;
     margin-top: auto;
@@ -40,7 +29,8 @@ label.images {
 }
 
 p.chat {
-    background-color: #acc;
+    background-color: #99C1B9;
+    border-radius: 50px;
     align-items: center;
     color: black;
 }
@@ -51,4 +41,13 @@ p.chat {
 button.create_chat {
     background-color: #000;
     color: white;
+}
+body {
+    background-color: #F1E3D3;
+}
+.navbar {
+    background-color: #A9714B;
+}
+div.err {
+    visibility: hidden;
 }

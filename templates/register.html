@@ -20,22 +20,29 @@
               {{ message }}
             </div>
         {% endif %}
-        <form action="" method="post" enctype="multipart/form-data">
+        <form id="registrationForm" action="" method="post" enctype="multipart/form-data">
             {{ form.hidden_tag() }}
             <p>
               <label class="images">
                 <img class="avatar1" id="preview">
                 <img class="avatar" src="/static/img/users/default.png">
                 &emsp;{{ form.photo(class='avatar form-control', id='fileInput', type='file', hidden=true)}}
-                  {{ form.username(class="inp", size=200, maxlength=50, type="string", placeholder=form.username.label.text) }}<br>
-                  {% for error in form.username.errors %}
-                      <div class="alert alert-danger" role="alert">
-                          {{ error }}
-                      </div>
-                  {% endfor %}
+                  {{ form.username(id="username", class="inp", size=200, maxlength=50, type="string", placeholder=form.username.label.text) }}<br>
+                  <!--                  {% for error in form.username.errors %}-->
+<!--                  {% endfor %}-->
             </label>&emsp;
             </p>
-            {% for i in form if i.name != 'photo' and i.name != 'username' and i.name != 'csrf_token' and i.name != 'submit' %}
+            <div  id="usernameError" class="err alert alert-danger" role="alert"></div>
+            <p>
+                {{ form.email(id="email", class='form-control', placeholder=form.email.label.text) }}<br>
+                {% for error in form.email.errors %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+                {% endfor %}
+            </p>
+            <div id="emailError" class="err alert alert-danger" role="alert"></div>
+            {% for i in form if i.name != 'photo' and i.name != 'email' and i.name != 'username' and i.name != 'csrf_token' and i.name != 'submit' %}
             <p>
                 {{ i(class="form-control", placeholder=i.label.text) }}<br>
                 {% for error in i.errors %}
@@ -47,6 +54,68 @@
             {% endfor %}
             <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
         </form>
+
+        <script>
+            const usernameInput = document.getElementById('username');
+            const usernameError = document.getElementById('usernameError');
+
+            usernameInput.addEventListener('input', async function() {
+                const username = this.value;
+                if (username.length < 3) {
+                    usernameError.textContent = '';
+                    return;
+                }
+
+                const response = await fetch('/check_username', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `username=${encodeURIComponent(username)}`
+                });
+                const data = await response.json();
+
+                console.log('Ответ сервера:', data);  // Должно быть {exists: true/false}
+
+                if (data.exists) {
+                  usernameError.textContent = 'Имя занято!';
+                  usernameError.style.visibility = usernameError.style.visibility === 'hidden' ? 'visible' : 'visible';
+                } else {
+                  usernameError.textContent = '';
+                  usernameError.style.visibility = usernameError.style.visibility === 'hidden' ? 'visible' : 'hidden';
+                }
+            });
+        </script>
+
+        <script>
+            const emailInput = document.getElementById('email');
+            const emailError = document.getElementById('emailError');
+
+            emailInput.addEventListener('input', async function() {
+                const email = this.value;
+                if (email.length < 3) {
+                    emailError.textContent = '';
+                    return;
+                }
+
+                const response = await fetch('/check_email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `email=${encodeURIComponent(email)}`
+                });
+                const data = await response.json();
+
+                if (data.exists) {
+                  emailError.textContent = 'Аккаунт с такой почтой уже существует';
+                  emailError.style.visibility = emailError.style.visibility === 'hidden' ? 'visible' : 'visible';
+                } else {
+                  emailError.textContent = '';  // Очищаем ошибку
+                  emailError.style.visibility = emailError.style.visibility === 'hidden' ? 'visible' : 'hidden';
+                }
+            });
+        </script>
 
         <script>
             const fileInput = document.getElementById('fileInput');

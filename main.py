@@ -4,7 +4,7 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 from flask_wtf import FlaskForm
 from flask_restful import Api
 
-from flask import Flask, render_template, redirect, request, abort
+from flask import Flask, render_template, redirect, request, abort, jsonify
 
 from data import db_session
 from data.chats import Chats
@@ -25,7 +25,7 @@ login_manager.init_app(app)
 def add_user(db_sess, username, name, surname, email, password):
     user = User()
     user.name = name.data
-    user.username = username.data
+    user.username = username.data.strip()
     user.email = email.data
     user.set_password(password.data)
     user.surname = surname.data
@@ -83,14 +83,34 @@ def login():
     return render_template('login.html', title='Авторизация', form=form)
 
 
+@app.route('/check_username', methods=['POST'])
+def check_username():
+    db_ses = db_session.create_session()
+    username = request.form.get('username').strip()
+    user = db_ses.query(User).filter(User.username==username).first()
+    return jsonify({'exists': user is not None})
+
+
+@app.route('/check_email', methods=['POST'])
+def check_email():
+    db_ses = db_session.create_session()
+    email = request.form.get('email').strip()
+    user = db_ses.query(User).filter(User.email==email).first()
+    return jsonify({'exists': user is not None})
+
+
 @app.route('/')
 def index():
     chats = []
+    usernames = []
     if current_user.is_authenticated:
         id_user = current_user.id
         db_sess = db_session.create_session()
+        users = db_sess.query(User.username).all()
+        for i in users:
+            usernames.append(i[0])
         chats = db_sess.query(Chats).filter(Chats.users.any(User.id == id_user)).all()
-    return render_template('index.html', title='', chats=chats)
+    return render_template('index.html', usernames=usernames, title='', chats=chats)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -119,23 +139,25 @@ def register():
 def add_a_chat():
     form = ChatForm()
     db_sess = db_session.create_session()
-    if current_user.friends:
-        friends = current_user.friends.split(', ')
-        form.members.choices = friends
-    if form.validate_on_submit():
-        img = 'static/img/group/default_group.avif'
-        members = form.members.data
-        members.append(current_user.username)
-        chat = add_chat(db_sess, form.name.data, members)
-        photo = form.photo.data.read()
-        if photo:
-            img = f'static/img/group/chat{chat.id}.{form.photo.data.filename[form.photo.data.filename.rfind(".") + 1:]}'
-            with open(img, 'wb') as f:
-                f.write(photo)
-        chat.chat_image = img
-        db_sess.commit()
-        return redirect(f"/chat/{chat.id}")
-    return render_template('create_chat.html', title='klk', form=form)
+    if current_user.is_authenticated:
+        if current_user.friends:
+            friends = current_user.friends.split(', ')
+            form.members.choices = friends
+        if form.validate_on_submit():
+            img = 'static/img/group/default_group.avif'
+            members = form.members.data
+            members.append(current_user.username)
+            chat = add_chat(db_sess, form.name.data, members)
+            photo = form.photo.data.read()
+            if photo:
+                img = f'static/img/group/chat{chat.id}.{form.photo.data.filename[form.photo.data.filename.rfind(".") + 1:]}'
+                with open(img, 'wb') as f:
+                    f.write(photo)
+            chat.chat_image = img
+            db_sess.commit()
+            return redirect(f"/chat/{chat.id}")
+        return render_template('create_chat.html', title='klk', form=form)
+    return redirect('/login')
 
 
 def main():

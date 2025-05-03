@@ -12,13 +12,36 @@
 </head>
 <body>
 <header>
-    <nav class="navbar navbar-light bg-light">
+    <nav class="navbar navbar-light">
         <h1>Здесь хранятся ваши чаты</h1>
         {% if current_user.is_authenticated %}
+                <input type="text" id="searchInput" list="searchResults" placeholder="Добавить друга">
+                <datalist id="searchResults"></datalist>
+                <script>
+                    const allItems = {{ usernames | tojson | safe }}
+
+                    document.getElementById('searchInput').addEventListener('input', function(e) {
+                      const searchText = e.target.value.toLowerCase();
+                      const datalist = document.getElementById('searchResults');
+
+                      if (!searchText.trim()) {
+                        datalist.innerHTML = '';
+                        return;
+                      }
+
+                      const matches = allItems.filter(item =>
+                        item.toLowerCase().includes(searchText)
+                      );
+
+                      datalist.innerHTML = matches
+                        .map(item => `<option value="${item}">`)
+                        .join('');
+                    });
+                  </script>
                 <div class="dropdown">
                   <a class="navbar-brand" data-bs-toggle="dropdown" aria-expanded="false" >{{ current_user.username }}</a>
                   <img class="avatar" data-bs-toggle="dropdown" aria-expanded="false" src="{{ current_user.profile_picture}}">
-                  <a>&emsp;&emsp;&emsp;&emsp;</a>
+                  <span>&emsp;&emsp;&emsp;&emsp;</span>
 
                   <ul class="ds dropdown-menu">
                     <li class="ds"><a class="dropdown-item" href="#">Action</a></li>
