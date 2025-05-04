@@ -32,6 +32,7 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
     hashed_password = sqlalchemy.Column(sqlalchemy.String)
     created_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
     message = orm.relationship("Message", back_populates='user')
+    notification = orm.relationship("Notification", back_populates='user')
 
     def set_password(self, password):
         self.hashed_password = generate_password_hash(password)

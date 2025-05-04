@@ -20,14 +20,26 @@
   <a class="chat" href="/chat/{{ chat.id }}">
     <p class="chat">
       <label>&emsp;
-          <img class="avatar" src="{{ chat.chat_image }}">&emsp;
+          <img class="avatar" src="{{ url_for('static', filename=chat.chat_image) }}">&emsp;
           {{ chat.name }}
       </label>
     </p>
   </a>
   {% endfor %}
   {% else %}
-  <p>login</p>
+  <div class="parent">
+    <div class="block">
+      <h2 style="text-align: center;">
+      Быстрый и безопасный мессенджер для общения в реальном времени.
+          Обменивайтесь сообщениями, файлами и создавайте групповые чаты с друзьями и коллегами.
+          Простой интерфейс и надежное шифрование данных.
+      </h2>
+        <p style="text-align: center;">
+            <a class="bottom-btn btn btn-primary " href="/register">Зарегистрироваться</a>
+            <a class="bottom-btn btn btn-success" href="/login">Войти</a>
+        </p>
+    </div>
+  </div>
   {% endif %}
   {% endblock %}
 </body>
