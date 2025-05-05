@@ -1,10 +1,9 @@
 .avatar {
     border-radius: 50%;
-    margin-top: auto;
-    margin-bottom: auto;
     width: 75px;
     height: 75px;
 }
+
 .avatar1 {
     border-radius: 50%;
     width: 75px;
@@ -34,49 +33,38 @@ p.chat {
     align-items: center;
     color: black;
 }
+
+p.chat:hover {
+    background-color: #558B80;
+    border-radius: 50px;
+    align-items: center;
+    color: black;
+}
+
 .inp {
     width: 85%
 }
 
-button.create_chat {
+.create_chat {
     background-color: #AA6373;
-    color: white;
 }
+
+.create_chat:hover {
+    background-color: #76414E;
+}
+
 body {
     background-color: #F1E3D3;
 }
+
 .navbar {
     background-color: #A9714B;
 }
+
 div.err {
     visibility: hidden;
 }
 
-.parent {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-    overflow: auto;
-    white-space: nowrap;
-    text-align: center;
-    font-size: 0;
-
-    &::before {
-        height: 100%;
-        display: inline-block;
-        vertical-align: middle;
-        content: '';
-    }
-}
-
-.block {
-    display: inline-block;
-    white-space: normal;
-    vertical-align: middle;
-    text-align: left;
-}
 .bottom-btn {
     height: 74px;
     min-width: 200px;
@@ -87,9 +75,64 @@ div.err {
     line-height: 50px;
     text-align: center;
 }
+
 .search {
     height: 40px;
 }
+
 .main {
     background-color: #AA6373;
+}
+
+.back_index {
+    color: #AA6373;
+    active-color: black;
+    font-size: 50px;
+}
+
+div.chating {
+    background-color: #99C1B9;
+    color: #AA6373;
+    font-size: 50px;
+    text-align: justify;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.chat_set {
+    float: right;
+    color: #AA6373;
+}
+
+a:hover {
+    color: #76414E;
+}
+
+.butt {
+    background-color: #AA6373;
+}
+
+.butt:hover {
+    background-color: #76414E;
+}
+
+.scroll {
+  min-height: 70vh;
+  overflow-y: auto;
+  background-color: #5D988D;
+}
+
+.send-message {
+    margin-top: auto; /* Прижимает к низу */
+    background: #fff;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+    display: flex;
+    gap: 10px;
+    flex: 1;
+    padding: 8px;
+    background-color: #5D988D;
 }

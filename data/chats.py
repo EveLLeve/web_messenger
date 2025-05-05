@@ -12,4 +12,4 @@ class Chats(SqlAlchemyBase, SerializerMixin):
     name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     chat_image = sqlalchemy.Column(sqlalchemy.String, default='static/img/group/default_group.avif')
     users = orm.relationship("User", secondary="users_to_chats", backref="chats")
-    messages = orm.relationship("Message", secondary="messages_to_chats", backref="chats")
+    messages = orm.relationship("Message", back_populates='chats')

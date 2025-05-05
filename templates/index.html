@@ -15,7 +15,7 @@
 
   {% block content %}
   {% if current_user.is_authenticated %}
-  <a href="/chat"><button class="create_chat">Создать чат</button></a>
+  <a href="/chat" class="create_chat btn">Создать чат</a>
   {% for chat in chats %}
   <a class="chat" href="/chat/{{ chat.id }}">
     <p class="chat">
@@ -27,18 +27,17 @@
   </a>
   {% endfor %}
   {% else %}
-  <div class="parent">
-    <div class="block">
-      <h2 style="text-align: center;">
-      Быстрый и безопасный мессенджер для общения в реальном времени.
-          Обменивайтесь сообщениями, файлами и создавайте групповые чаты с друзьями и коллегами.
-          Простой интерфейс и надежное шифрование данных.
-      </h2>
-        <p style="text-align: center;">
-            <a class="bottom-btn btn btn-primary " href="/register">Зарегистрироваться</a>
-            <a class="bottom-btn btn btn-success" href="/login">Войти</a>
-        </p>
-    </div>
+  <div style="height: 100px;"></div>
+  <div style="background-color: #99C1B9; padding: 20px 20px 20px 20px">
+  <h2 style="text-align: center;">
+  Быстрый и безопасный мессенджер для общения в реальном времени.
+      Обменивайтесь сообщениями, файлами и создавайте групповые чаты с друзьями и коллегами.
+      Простой интерфейс и надежное шифрование данных.
+  </h2>
+    <p style="text-align: center;">
+        <a class="bottom-btn btn btn-primary " href="/register">Зарегистрироваться</a>
+        <a class="bottom-btn btn btn-success" href="/login">Войти</a>
+    </p>
   </div>
   {% endif %}
   {% endblock %}

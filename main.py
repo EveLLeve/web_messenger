@@ -200,7 +200,6 @@ def add_a_chat():
             if photo:
                 img = (f'img/group/chat{chat.id}.' +
                        f'{form.photo.data.filename[form.photo.data.filename.rfind(".") + 1:]}')
-                print(img)
                 with open(url_for('static', filename=img), 'wb') as f:
                     f.write(photo)
             chat.chat_image = img
@@ -213,25 +212,28 @@ def add_a_chat():
 
 @app.route('/chat/<int:id_chat>')
 def chats(id_chat):
-    db_sess = db_session.create_session()
-    chat = db_sess.query(Chats).get(id_chat)
-    print(chat)
+    if current_user.is_authenticated:
+        db_sess = db_session.create_session()
+        chat = db_sess.query(Chats).get(id_chat)
+        if current_user.id not in map(lambda x: x.id, chat.users):
+            return redirect(url_for('index'))
 
-    global reload
-    form_friend = FriendForm()
-    check = check_friend(form_friend)
-    usernames = []
-    users = db_sess.query(User.username).all()
-    for i in users:
-        usernames.append(i[0])
-    if check:
-        reload = True
-        return redirect(url_for('add_a_chat', check=check))
-    get_a = reload
-    reload = False
-    check = request.args.get('check')
-    return render_template('chating.html', usernames=usernames, reload=get_a,
-                           modal_message=check, form_friend=form_friend)
+        global reload
+        form_friend = FriendForm()
+        check = check_friend(form_friend)
+        usernames = []
+        users = db_sess.query(User.username).all()
+        for i in users:
+            usernames.append(i[0])
+        if check:
+            reload = True
+            return redirect(url_for('chats', check=check))
+        get_a = reload
+        reload = False
+        check = request.args.get('check')
+        return render_template('chating.html', chats=chat, usernames=usernames, reload=get_a,
+                               modal_message=check, form_friend=form_friend)
+    return redirect(url_for('login'))
 
 
 def main():

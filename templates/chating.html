@@ -8,9 +8,33 @@
   {% extends "base.html" %}
 
   {% block content %}
-  {% for message in chats %}
-
+  <div class="chating">
+      <a class="back_index" href="/"><</a>
+      <span style="
+        flex-grow: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: black;
+      ">
+        {{ chats.name|default('Название чата') }}
+      </span>
+      <div style="flex-shrink: 0;">
+          <img class="avatar" style="" src="{{ url_for('static', filename=chats.chat_image) }}">&emsp;
+          <a class="chat_set" style="float: right;" href="/chat/{{chats.id}}/settings">&vellip;</a>
+      </div>
+  </div>
+  <div class="scroll" style="
+    display: flex;">
+  {% for message in chats.messages %}
   {% endfor %}
+      <div class="send-message">
+      <input type="search" placeholder="write here" style="gap: 10px;
+  flex: 1;">
+          <a class="btn btn-primary">fff</a>
+      </div>
+  </div>
+
   {% endblock %}
 </body>
 </html>
