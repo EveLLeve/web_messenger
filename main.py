@@ -1,91 +1,66 @@
 import os
 
+from cryptography.fernet import Fernet
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_restful import Api
 
 from flask import Flask, render_template, redirect, request, jsonify, url_for
+from flask_socketio import SocketIO
 
 from data import db_session
 from data.chats import Chats
-from data.messages import Message
+from data.func import check_friend, add_user, add_chat, add_message
 from data.user import User
 from forms.chat import ChatForm
 from forms.login import LoginForm
 from forms.register import RegisterForm
 from forms.add_freind import FriendForm
-from data.notification import Notification
+from data.socket import initialization
+
+
+class Config:
+    SECRET_KEY = os.environ.get('SECRET_KEY') or Fernet.generate_key().decode()
+
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
+app.config.from_object(Config)
 api = Api(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
+socketio = SocketIO(app)
+
+initialization(socketio)
 
 
-def add_user(db_sess, username, name, surname, email, password):
-    user = User()
-    user.name = name.data
-    user.username = username.data.strip()
-    user.email = email.data
-    user.set_password(password.data)
-    user.surname = surname.data
-    db_sess.add(user)
-    db_sess.commit()
-    return user
-
-
-def add_message(db_sess, content, creator):
-    message = Message()
-    message.content = content
-    message.creator = creator
-    db_sess.add(message)
-    db_sess.commit()
-
-
-def add_chat(db_sess, name, members):
-    chat = Chats()
-    chat.name = name
-    for member in members:
-        user = db_sess.query(User).filter(User.username == member).first()
-        chat.users.append(user)
-    db_sess.add(chat)
-    db_sess.commit()
-    return chat
-
-
-def check_friend(form):
-    if form.validate_on_submit():
-        db_sess = db_session.create_session()
-        u = form.username.data.strip()
-        user = db_sess.query(User).filter(User.username == u).first()
-        if user:
-            notific = Notification()
-            notific.creator = current_user.username
-            notific.target = user.username
-            n = db_sess.query(Notification).filter((Notification.creator == notific.creator) & (Notification.target == notific.target)).first()
-            fr = user.username in current_user.friends
-            if n:
-                return 'Вы уже отправили запрос в друзья'
-            if fr:
-                return 'У вас уже есть такой друг'
-            db_sess.add(notific)
-            db_sess.commit()
-            return 'Запрос успешно отправлен'
-        return 'Пользователя с таким именем ещё нет'
-    return ''
+def find_friends(db_sess):
+    global reload
+    form_friend = FriendForm()
+    check = check_friend(form_friend)
+    usernames = []
+    users = db_sess.query(User.username).all()
+    for i in users:
+        usernames.append(i[0])
+    if check:
+        reload = True
+        return True, check, usernames, form_friend
+    get_a = reload
+    reload = False
+    check = request.args.get('check')
+    return False, get_a, check, usernames, form_friend
 
 
 @login_manager.user_loader
 def load_user(user_id):
     db_sess = db_session.create_session()
-    return db_sess.query(User).get(user_id)
+    return db_sess.get(User, user_id)
 
 
 @app.route('/logout')
 @login_required
 def logout():
-    logout_user()
+    if current_user.is_authenticated:
+        logout_user()
     return redirect("/")
 
 
@@ -124,26 +99,18 @@ def check_email():
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    global reload
-    form_friend = FriendForm()
-    check = check_friend(form_friend)
-    usernames = []
-
-    chats = []
     if current_user.is_authenticated:
-        id_user = current_user.id
         db_sess = db_session.create_session()
-        users = db_sess.query(User.username).all()
-        for i in users:
-            usernames.append(i[0])
-        chats = db_sess.query(Chats).filter(Chats.users.any(User.id == id_user)).all()
-    if check:
-        reload = True
-        return redirect(url_for('index', check=check))
-    get_a = reload
-    reload = False
-    check = request.args.get('check')
-    return render_template('index.html', title='Главная', usernames=usernames, reload=get_a, modal_message=check, chats=chats, form_friend=form_friend)
+        global reload
+
+        h = find_friends(db_sess)
+        if h[0]:
+            return redirect(url_for('index', check=h[1]))
+        get_a, check, usernames, form_friend = h[1:]
+        id_user = current_user.id
+        chat = db_sess.query(Chats).filter(Chats.users.any(User.id == id_user)).all()
+        return render_template('index.html', title='Главная', usernames=usernames, reload=get_a, modal_message=check, chats=chat, form_friend=form_friend)
+    return render_template('index.html', title='Главная')
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -171,26 +138,19 @@ def register():
 
 @app.route('/chat', methods=['GET', 'POST'])
 def add_a_chat():
-    form = ChatForm()
-    db_sess = db_session.create_session()
-
-    global reload
-    form_friend = FriendForm()
-    check = check_friend(form_friend)
-    usernames = []
     if current_user.is_authenticated:
+        form = ChatForm()
+        db_sess = db_session.create_session()
         if current_user.friends:
             friends = current_user.friends.split(', ')
             form.members.choices = friends
-        users = db_sess.query(User.username).all()
-        for i in users:
-            usernames.append(i[0])
-        if check:
-            reload = True
-            return redirect(url_for('add_a_chat', check=check))
-        get_a = reload
-        reload = False
-        check = request.args.get('check')
+
+        global reload
+
+        h = find_friends(db_sess)
+        if h[0]:
+            return redirect(url_for('chats', check=h[1]))
+        get_a, check, usernames, form_friend = h[1:]
         if form.validate_on_submit():
             img = 'img/group/default_group.avif'
             members = form.members.data
@@ -210,28 +170,82 @@ def add_a_chat():
     return redirect('/login')
 
 
-@app.route('/chat/<int:id_chat>')
+@app.route('/chat/<int:id_chat>', methods=['GET', 'POST'])
 def chats(id_chat):
     if current_user.is_authenticated:
         db_sess = db_session.create_session()
-        chat = db_sess.query(Chats).get(id_chat)
+        chat = db_sess.get(Chats, id_chat)
+        global reload
+
+        h = find_friends(db_sess)
+        if h[0]:
+            return redirect(url_for('chats', id_chat=id_chat, check=h[1]))
+        get_a, check, usernames, form_friend = h[1:]
         if current_user.id not in map(lambda x: x.id, chat.users):
             return redirect(url_for('index'))
+        return render_template('chating.html', chats=chat, usernames=usernames, reload=get_a,
+                               modal_message=check, form_friend=form_friend)
+    return redirect(url_for('login'))
+
+
+@app.route('/profile', methods=['GET', 'POST'])
+def profile():
+    if not current_user.is_authenticated:
+        return redirect('/')
+    db_sess = db_session.create_session()
+    form = RegisterForm()
+    if form.submit.data:
+        user = add_user(db_sess, form.username, form.name, form.surname, form.email, add=False)
+        photo = form.photo.data.read()
+        if photo:
+            img = (f'img/users/user{user.id}.' +
+                   f'{form.photo.data.filename[form.photo.data.filename.rfind(".") + 1:]}')
+            with open(f'static/{img}', 'wb') as f:
+                f.write(photo)
+            user.profile_picture = img
+            db_sess.commit()
+        return redirect('/profile')
+    global reload
+
+    h = find_friends(db_sess)
+    if h[0]:
+        return redirect(url_for('profile', check=h[1]))
+    get_a, check, usernames, form_friend = h[1:]
+    return render_template('profile.html', title='Профиль', form=form, usernames=usernames, reload=get_a,
+                           modal_message=check, form_friend=form_friend)
+
+
+@app.route('/chat/<int:id_chat>/settings', methods=['GET', 'POST'])
+def chat_setting(id_chat):
+    if current_user.is_authenticated:
+        form = ChatForm()
+        db_sess = db_session.create_session()
+        chat = db_sess.get(Chats, id_chat)
+        if current_user.friends:
+            friends = current_user.friends.split(', ')
+            form.members.choices = list(set(friends + [i.username for i in chat.users]))
 
         global reload
-        form_friend = FriendForm()
-        check = check_friend(form_friend)
-        usernames = []
-        users = db_sess.query(User.username).all()
-        for i in users:
-            usernames.append(i[0])
-        if check:
-            reload = True
-            return redirect(url_for('chats', check=check))
-        get_a = reload
-        reload = False
-        check = request.args.get('check')
-        return render_template('chating.html', chats=chat, usernames=usernames, reload=get_a,
+
+        h = find_friends(db_sess)
+        if h[0]:
+            return redirect(url_for('chats', check=h[1]))
+        get_a, check, usernames, form_friend = h[1:]
+        if form.submit.data:
+            img = 'img/group/default_group.avif'
+            members = form.members.data
+            print(members)
+            chat = add_chat(db_sess, form.name.data, members, False, id_chat)
+            photo = form.photo.data.read()
+            if photo:
+                img = (f'img/group/chat{chat.id}.' +
+                       f'{form.photo.data.filename[form.photo.data.filename.rfind(".") + 1:]}')
+                with open(f'static/{img}', 'wb') as f:
+                    f.write(photo)
+            chat.chat_image = img
+            db_sess.commit()
+            return redirect(f"/chat/{chat.id}")
+        return render_template('chat_setting.html', chat=chat, members=[i.username for i in chat.users], form=form, usernames=usernames, reload=get_a,
                                modal_message=check, form_friend=form_friend)
     return redirect(url_for('login'))
 

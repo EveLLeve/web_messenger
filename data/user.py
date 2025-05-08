@@ -17,6 +17,15 @@ users_to_chats_table = sqlalchemy.Table(
                       sqlalchemy.ForeignKey('chats.id'))
 )
 
+messages_to_user_table = sqlalchemy.Table(
+    'messages_to_user',
+    SqlAlchemyBase.metadata,
+    sqlalchemy.Column('users', sqlalchemy.Integer,
+                      sqlalchemy.ForeignKey('users.id')),
+    sqlalchemy.Column('messages', sqlalchemy.Integer,
+                      sqlalchemy.ForeignKey('messages.id'))
+)
+
 
 class User(SqlAlchemyBase, UserMixin, SerializerMixin):
     __tablename__ = 'users'
@@ -27,11 +36,10 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
     name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     surname = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     profile_picture = sqlalchemy.Column(sqlalchemy.String, default='static/img/users/default.png')
-    friends = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    friends = sqlalchemy.Column(sqlalchemy.String, default='')
     email = sqlalchemy.Column(sqlalchemy.String, unique=True)
     hashed_password = sqlalchemy.Column(sqlalchemy.String)
     created_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
-    message = orm.relationship("Message", back_populates='user')
     notification = orm.relationship("Notification", back_populates='user')
 
     def set_password(self, password):

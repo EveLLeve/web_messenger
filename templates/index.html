@@ -19,10 +19,16 @@
   {% for chat in chats %}
   <a class="chat" href="/chat/{{ chat.id }}">
     <p class="chat">
-      <label>&emsp;
           <img class="avatar" src="{{ url_for('static', filename=chat.chat_image) }}">&emsp;
-          {{ chat.name }}
-      </label>
+          <span style="
+        flex-grow: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: black;
+      ">
+        {{ chat.name|default('Название чата') }}
+      </span>
     </p>
   </a>
   {% endfor %}

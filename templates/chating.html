@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <title>{{ title }}</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+
 </head>
 <body>
   {% extends "base.html" %}
@@ -24,17 +26,65 @@
           <a class="chat_set" style="float: right;" href="/chat/{{chats.id}}/settings">&vellip;</a>
       </div>
   </div>
-  <div class="scroll" style="
-    display: flex;">
-  {% for message in chats.messages %}
-  {% endfor %}
-      <div class="send-message">
-      <input type="search" placeholder="write here" style="gap: 10px;
-  flex: 1;">
-          <a class="btn btn-primary">fff</a>
+  <div id="messages" class="scroll">
+      {% for msg in chats.messages %}
+      <span class="username"> {{ msg.users[0].username }}</span>
+      <div class='show-in-chat'>
+          <img class="avatar2" src="{{ url_for('static', filename=msg.users[0].profile_picture) }}" alt="{{msg.users[0].username}} avatar">
+      <p class="message">
+          {{ msg.content }}
+      </p>
       </div>
+          {{ msg.created_date.strftime('%d.%m.%y %H:%M') }}<br>
+      {% endfor %}
   </div>
+  <form id="form" class="send-message">
+      <textarea id="input" autocomplete="off" style="width:90%;" placeholder="Введите сообщение"></textarea>
+        <button class="butt" style="width: 10%; font-size: 20px;">-></button>
+      </form>
+  <script type="text/javascript">
+      var block = document.getElementById("messages");
+      block.scrollTop = block.scrollHeight;
+  </script>
+  <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const socket = io();
+            const form = document.getElementById('form');
+            const input = document.getElementById('input');
+            const messages = document.getElementById('messages');
 
+            function joinRoom(roomId) {
+                socket.emit('join', { room_id: roomId });
+            }
+
+            joinRoom({{ chats.id }})
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                if (input.value) {
+                    socket.emit('message', input.value, {{ current_user.id }}, {{ chats.id }});
+                    input.value = '';
+                }
+            });
+
+            socket.on('message', (data, msg, url, date) => {
+            if (data) {
+            console.log('data');
+                messages.insertAdjacentHTML('beforeend', `
+      <span class="username"> ${ msg }</span>
+                    <div id='mes' class='show-in-chat'>
+                      <img class="avatar2" src="${url}" alt="${msg} avatar">
+                      <p class='message'>
+                        ${data}
+                      </p>
+                     </div>
+                     ${date }<br>
+                `);
+                messages.scrollTop = messages.scrollHeight;
+               };
+            });
+        });
+    </script>
   {% endblock %}
 </body>
 </html>

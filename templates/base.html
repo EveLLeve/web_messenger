@@ -19,7 +19,7 @@
             {{ form_friend.hidden_tag() }}
             <p>
               {{ form_friend.username(id="searchInput", class="search", list="searchResults", type="search", placeholder=form_friend.username.label.text) }}
-              {{ form_friend.submit(class="btn butt", type="submit") }}
+              {{ form_friend.submit1(class="btn butt", type="submit") }}
               <datalist id="searchResults"></datalist>
               <script>
                 const allItems = {{ usernames | tojson | safe }}
@@ -74,8 +74,7 @@
           <span>&emsp;&emsp;&emsp;&emsp;</span>
 
           <ul class="ds dropdown-menu">
-            <li class="ds"><a class="dropdown-item" href="#">Action</a></li>
-            <li class="ds"><a class="dropdown-item" href="#">Another action</a></li>
+            <li class="ds"><a class="dropdown-item" href="/profile">Профиль</a></li>
             <li class="ds"><a class="dropdown-item" href="/logout">Выйти</a></li>
           </ul>
         </div>

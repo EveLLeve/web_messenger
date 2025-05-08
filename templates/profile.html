@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ title }}</title>
+</head>
+<body>
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ title }} <a href="/" class="main btn">На главную</a> </h1>
+{% if message %}
+    <div class="alert alert-danger" role="alert">
+      {{ message }}
+    </div>
+{% endif %}
+<form id="registrationForm" action="" method="post" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    <p>
+      <label class="images">
+        <img class="avatar1" id="preview">
+        <img class="avatar" src="{{ url_for('static', filename=current_user.profile_picture) }}">
+        &emsp;{{ form.photo(class='avatar form-control', id='fileInput', type='file', hidden=true)}}
+          {{ form.username(id="username", class="inp", size=200, maxlength=50, type="string", value=current_user.username) }}<br>
+          <!--                  {% for error in form.username.errors %}-->
+<!--                  {% endfor %}-->
+    </label>&emsp;
+    </p>
+    <div  id="usernameError" class="err alert alert-danger" role="alert"></div>
+    <p>
+        {{ form.email(id="email", class='form-control', value=current_user.email) }}<br>
+        {% for error in form.email.errors %}
+        <div class="alert alert-danger" role="alert">
+            {{ error }}
+        </div>
+        {% endfor %}
+    </p>
+    <div id="emailError" class="err alert alert-danger" role="alert"></div>
+    <p>
+      Имя<br>
+          {{ form.name(class="form-control", value=current_user.name) }}<br>
+          {% for error in form.name.errors %}
+          <div class="alert alert-danger" role="alert">
+              {{ error }}
+          </div>
+          {% endfor %}
+    </p>
+    <p>
+      Фамилия<br>
+          {{ form.surname(class="form-control", value=current_user.surname) }}<br>
+          {% for error in form.surname.errors %}
+          <div class="alert alert-danger" role="alert">
+              {{ error }}
+          </div>
+          {% endfor %}
+    </p>
+    <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+</form>
+
+<script>
+    const usernameInput = document.getElementById('username');
+    const usernameError = document.getElementById('usernameError');
+
+    usernameInput.addEventListener('input', async function() {
+        const username = this.value;
+        if (username.length < 3) {
+            usernameError.textContent = '';
+            return;
+        }
+
+        const response = await fetch('/check_username', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `username=${encodeURIComponent(username)}`
+        });
+        const data = await response.json();
+
+        console.log('Ответ сервера:', data);  // Должно быть {exists: true/false}
+
+        if (data.exists & username != '{{ current_user.username }}') {
+          usernameError.textContent = 'Имя занято!';
+          usernameError.style.visibility = usernameError.style.visibility === 'hidden' ? 'visible' : 'visible';
+        } else {
+          usernameError.textContent = '';
+          usernameError.style.visibility = usernameError.style.visibility === 'hidden' ? 'visible' : 'hidden';
+        }
+    });
+</script>
+
+<script>
+    const emailInput = document.getElementById('email');
+    const emailError = document.getElementById('emailError');
+
+    emailInput.addEventListener('input', async function() {
+        const email = this.value;
+        if (email.length < 3) {
+            emailError.textContent = '';
+            return;
+        }
+
+        const response = await fetch('/check_email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `email=${encodeURIComponent(email)}`
+        });
+        const data = await response.json();
+
+        if (data.exists & email != '{{ current_user.email }}') {
+          emailError.textContent = 'Аккаунт с такой почтой уже существует';
+          emailError.style.visibility = emailError.style.visibility === 'hidden' ? 'visible' : 'visible';
+        } else {
+          emailError.textContent = '';  // Очищаем ошибку
+          emailError.style.visibility = emailError.style.visibility === 'hidden' ? 'visible' : 'hidden';
+        }
+    });
+</script>
+
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const preview = document.getElementById('preview');
+
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+</script>
+{% endblock %}
+</body>
+</html>

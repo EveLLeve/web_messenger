@@ -15,8 +15,6 @@ class Message(SqlAlchemyBase, UserMixin, SerializerMixin):
                            primary_key=True, autoincrement=True)
     chat_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey("chats.id"))
     content = sqlalchemy.Column(sqlalchemy.String)
-    creator = sqlalchemy.Column(sqlalchemy.String,
-                                sqlalchemy.ForeignKey("users.username"))
     created_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
-    user = orm.relationship("User")
+    users = orm.relationship("User", secondary="messages_to_user", backref="messages")
     chats = orm.relationship('Chats')
