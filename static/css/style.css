@@ -34,6 +34,7 @@ p.chat {
     color: black;
     display: flex;
     align-items: center;
+    position: relative;
     gap: 10px;
     width: 100%;
     justify-content: space-between;
@@ -166,4 +167,11 @@ a:hover {
 .username {
     font-size: 22px;
     color: #F3752B;
+}
+.create_chat1 {
+    background-color: #F3752B;
+}
+
+.create_chat1:hover {
+    background-color: #E75D0D;
 }

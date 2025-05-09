@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+</head>
+<body>
+  {% extends "base.html" %}
+
+  {% block content %}
+  <a href="/" class="main btn">На главную</a>
+  {% for notific in notification %}
+    <p class="chat">
+      from: {{ notific.creator }}
+      <span>
+      <a href="{{ url_for('change_notific', notific_id=notific.id, accept='False') }}" class="create_chat btn">Отклонить</a>
+      <a href="{{ url_for('change_notific', notific_id=notific.id, accept='True') }}" class="create_chat1 btn">Принять</a>
+      </span>
+    </p>
+  {% endfor %}
+  {% endblock %}
+</body>
+</html>

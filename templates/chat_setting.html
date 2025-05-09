@@ -43,7 +43,10 @@
                 {% endif %}
                 </div>
           </p>
-          <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
+          <p>{{ form.submit(type="submit", class="btn btn-primary") }}
+        <span style="flex-shrink: 0;">
+            <a href="{{ url_for('delete_chat', chat_id=chat.id) }}" class="create_chat btn">Удалить</a>
+        </span></p>
           <div>{{ message }}</div>
       </form>
 

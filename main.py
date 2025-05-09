@@ -10,6 +10,7 @@ from flask_socketio import SocketIO
 from data import db_session
 from data.chats import Chats
 from data.func import check_friend, add_user, add_chat, add_message
+from data.notification import Notification
 from data.user import User
 from forms.chat import ChatForm
 from forms.login import LoginForm
@@ -28,8 +29,8 @@ api = Api(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-socketio = SocketIO(app)
 
+socketio = SocketIO(app)
 initialization(socketio)
 
 
@@ -125,7 +126,7 @@ def register():
             if photo:
                 img = (f'img/users/user{user.id}.' +
                        f'{form.photo.data.filename[form.photo.data.filename.rfind(".") + 1:]}')
-                with open(url_for('static', filename=img), 'wb') as f:
+                with open(f'static/{img}', 'wb') as f:
                     f.write(photo)
             user.profile_picture = img
             db_sess.commit()
@@ -160,7 +161,7 @@ def add_a_chat():
             if photo:
                 img = (f'img/group/chat{chat.id}.' +
                        f'{form.photo.data.filename[form.photo.data.filename.rfind(".") + 1:]}')
-                with open(url_for('static', filename=img), 'wb') as f:
+                with open(f'static/{img}', 'wb') as f:
                     f.write(photo)
             chat.chat_image = img
             db_sess.commit()
@@ -184,7 +185,7 @@ def chats(id_chat):
         if current_user.id not in map(lambda x: x.id, chat.users):
             return redirect(url_for('index'))
         return render_template('chating.html', chats=chat, usernames=usernames, reload=get_a,
-                               modal_message=check, form_friend=form_friend)
+                               modal_message=check, form_friend=form_friend, title=chat.name)
     return redirect(url_for('login'))
 
 
@@ -234,7 +235,6 @@ def chat_setting(id_chat):
         if form.submit.data:
             img = 'img/group/default_group.avif'
             members = form.members.data
-            print(members)
             chat = add_chat(db_sess, form.name.data, members, False, id_chat)
             photo = form.photo.data.read()
             if photo:
@@ -246,8 +246,69 @@ def chat_setting(id_chat):
             db_sess.commit()
             return redirect(f"/chat/{chat.id}")
         return render_template('chat_setting.html', chat=chat, members=[i.username for i in chat.users], form=form, usernames=usernames, reload=get_a,
-                               modal_message=check, form_friend=form_friend)
+                               modal_message=check, form_friend=form_friend, title=f'Настроки чата: {chat.name}')
     return redirect(url_for('login'))
+
+
+@app.route('/delete/<int:chat_id>')
+def delete_chat(chat_id):
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
+    db_sess = db_session.create_session()
+    chat = db_sess.get(Chats, chat_id)
+    if current_user in chat.users:
+        db_sess.delete(chat)
+        db_sess.commit()
+    return redirect(url_for('index'))
+
+
+@app.route('/friends', methods=['GET', 'POST'])
+def friends_list():
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
+    db_sess = db_session.create_session()
+    friend = [i for i in db_sess.query(User).filter((User.username).in_(current_user.friends.split(', ')))]
+    global reload
+    h = find_friends(db_sess)
+    if h[0]:
+        return redirect(url_for('friends_list', check=h[1]))
+    get_a, check, usernames, form_friend = h[1:]
+    return render_template('friend.html', users=friend, title='Ваши друзья', usernames=usernames, reload=get_a,
+                           modal_message=check, form_friend=form_friend)
+
+
+@app.route('/notification', methods=['GET', 'POST'])
+def notification():
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
+    db_sess = db_session.create_session()
+    notific = db_sess.query(Notification).filter(Notification.target == current_user.username).all()
+    global reload
+    h = find_friends(db_sess)
+    if h[0]:
+        return redirect(url_for('notification', check=h[1]))
+    get_a, check, usernames, form_friend = h[1:]
+    return render_template('notification.html', notification=notific, title='Заявки в друзья', usernames=usernames, reload=get_a,
+                           modal_message=check, form_friend=form_friend)
+
+
+@app.route('/delete/<int:notific_id>/<accept>')
+def change_notific(notific_id, accept):
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
+    db_sess = db_session.create_session()
+    notific = db_sess.get(Notification, notific_id)
+    if current_user.username == notific.target:
+        if accept == 'True':
+            print(2)
+            creator = db_sess.query(User).filter(User.username==notific.creator).first()
+            target = db_sess.query(User).filter(User.username==notific.target).first()
+            creator.friends += f', {target.username}'
+            target.friends += f', {creator.username}'
+        print(1)
+        db_sess.delete(notific)
+        db_sess.commit()
+    return redirect(url_for('notification'))
 
 
 def main():

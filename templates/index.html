@@ -8,16 +8,16 @@
           integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
           crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="static/css/style.css" />
-    <title>Work log</title>
+    <title>Главная</title>
 </head>
 <body>
   {% extends "base.html" %}
 
   {% block content %}
   {% if current_user.is_authenticated %}
-  <a href="/chat" class="create_chat btn">Создать чат</a>
+  <a href="/chat" class="create_chat btn">Создать чат</a> <a href="/friends" class="create_chat btn">Друзья</a>
+  <a href="/notification" class="create_chat btn">Запросы в друзья</a>
   {% for chat in chats %}
-  <a class="chat" href="/chat/{{ chat.id }}">
     <p class="chat">
           <img class="avatar" src="{{ url_for('static', filename=chat.chat_image) }}">&emsp;
           <span style="
@@ -28,9 +28,13 @@
         color: black;
       ">
         {{ chat.name|default('Название чата') }}
-      </span>
+          </span>
+
+          {% if chat.messages %}
+          Последнее сообщение: {{ chat.last_date.strftime('%d.%m.%y %H:%M') }}
+          {% endif %}
+        <a class="chat" href="/chat/{{ chat.id }}" style="position: absolute; inset: 0; opacity: 0;" ></a>
     </p>
-  </a>
   {% endfor %}
   {% else %}
   <div style="height: 100px;"></div>
