@@ -7,7 +7,7 @@ from flask_restful import Api
 from flask import Flask, render_template, redirect, request, jsonify, url_for
 from flask_socketio import SocketIO
 
-from data import db_session
+from data import db_session, users_resource
 from data.chats import Chats
 from data.func import check_friend, add_user, add_chat, add_message
 from data.notification import Notification
@@ -313,6 +313,8 @@ def change_notific(notific_id, accept):
 
 def main():
     db_session.global_init("db/chat.sqlite")
+    api.add_resource(users_resource.UserResource, '/api/user')
+    api.add_resource(users_resource.UserListResource, '/api/users')
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
 
