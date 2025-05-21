@@ -6,7 +6,6 @@ cffi
 charset-normalizer
 click
 colorama
-cryptography
 databases
 Flask
 Flask-Login
